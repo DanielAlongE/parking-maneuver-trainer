@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "templateId": "parallel-park-kerbside",
+  "family": "parking",
+  "title": "Parallel park at the kerb",
+  "description": "Reverse into a kerbside gap between two parked cars on the right of a two-way street.",
+  "difficultyTier": 2,
+  "vehicleProfile": "sedan-mid",
+  "timeLimitS": 120,
+  "params": {
+    "gapLength": { "min": 6.5, "max": 7.6 },
+    "rearCarLength": { "choices": [4.05, 4.8, 5.2] }
+  },
+  "ego": {
+    "x": { "sum": [11.0, { "mul": [{ "param": "rearCarLength" }, 0.5] }, { "param": "gapLength" }] },
+    "y": 3.2,
+    "headingDeg": 0
+  },
+  "goal": {
+    "x": { "sum": [8.6, { "mul": [{ "param": "rearCarLength" }, 0.5] }, { "mul": [{ "param": "gapLength" }, 0.5] }] },
+    "y": 1.1,
+    "headingDeg": 0,
+    "positionTolM": 0.25,
+    "headingTolDeg": 5
+  },
+  "obstacles": [
+    { "id": "kerb-right", "kind": "kerb", "x": 20, "y": -0.15, "headingDeg": 0, "length": 40, "width": 0.3 },
+    { "id": "kerb-left", "kind": "kerb", "x": 20, "y": 6.55, "headingDeg": 0, "length": 40, "width": 0.3 },
+    {
+      "id": "rear-car",
+      "kind": "car",
+      "x": 10.0,
+      "y": 1.1,
+      "headingDeg": 0,
+      "length": { "param": "rearCarLength" },
+      "width": 1.84
+    },
+    {
+      "id": "front-car",
+      "kind": "car",
+      "x": { "sum": [12.4, { "mul": [{ "param": "rearCarLength" }, 0.5] }, { "param": "gapLength" }] },
+      "y": 1.1,
+      "headingDeg": 0,
+      "length": 4.8,
+      "width": 1.84
+    }
+  ],
+  "agents": []
+}

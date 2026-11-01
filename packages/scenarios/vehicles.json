@@ -1,0 +1,29 @@
+{
+  "hatchback": {
+    "length": 4.05,
+    "width": 1.75,
+    "wheelbase": 2.55,
+    "rearOverhang": 0.7,
+    "maxSteerDeg": 36,
+    "maxSteerRateDeg": 40,
+    "maxSpeedMps": 4.2
+  },
+  "sedan-mid": {
+    "length": 4.8,
+    "width": 1.84,
+    "wheelbase": 2.8,
+    "rearOverhang": 1.0,
+    "maxSteerDeg": 35,
+    "maxSteerRateDeg": 40,
+    "maxSpeedMps": 4.2
+  },
+  "suv-large": {
+    "length": 5.2,
+    "width": 2.0,
+    "wheelbase": 3.0,
+    "rearOverhang": 1.05,
+    "maxSteerDeg": 33,
+    "maxSteerRateDeg": 40,
+    "maxSpeedMps": 4.2
+  }
+}

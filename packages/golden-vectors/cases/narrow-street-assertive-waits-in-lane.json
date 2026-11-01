@@ -1,0 +1,21 @@
+{
+  "name": "narrow-street-assertive-waits-in-lane",
+  "description": "Waiting in the lane while an assertive oncoming car approaches ends in a collision.",
+  "templateId": "narrow-street-oncoming",
+  "seed": 1,
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 10,
+        "speedMps": 3
+      },
+      {
+        "kind": "wait",
+        "durationS": 30
+      }
+    ]
+  }
+}

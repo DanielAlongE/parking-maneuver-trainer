@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "templateId": "three-point-turn",
+  "family": "tight-turn",
+  "title": "Three-point turn on a narrow road",
+  "description": "Turn around to face the other way in the opposite lane of a road too narrow for a U-turn.",
+  "difficultyTier": 2,
+  "vehicleProfile": "sedan-mid",
+  "timeLimitS": 120,
+  "params": {
+    "roadWidth": { "min": 8.0, "max": 9.0 }
+  },
+  "ego": {
+    "x": 20,
+    "y": { "mul": [{ "param": "roadWidth" }, 0.25] },
+    "headingDeg": 0
+  },
+  "goal": {
+    "x": 20,
+    "y": { "mul": [{ "param": "roadWidth" }, 0.75] },
+    "headingDeg": 180,
+    "positionTolM": 2.5,
+    "headingTolDeg": 10
+  },
+  "obstacles": [
+    { "id": "kerb-right", "kind": "kerb", "x": 25, "y": -0.15, "headingDeg": 0, "length": 60, "width": 0.3 },
+    {
+      "id": "kerb-left",
+      "kind": "kerb",
+      "x": 25,
+      "y": { "sum": [{ "param": "roadWidth" }, 0.15] },
+      "headingDeg": 0,
+      "length": 60,
+      "width": 0.3
+    },
+    { "id": "parked-car", "kind": "car", "x": 9, "y": 1.0, "headingDeg": 0, "length": 4.8, "width": 1.84 }
+  ],
+  "agents": []
+}

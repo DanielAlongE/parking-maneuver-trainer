@@ -1,0 +1,46 @@
+{
+  "name": "parallel-park-input-limits",
+  "description": "Out-of-range inputs are clamped: steering past lock, speed past the limit, zero and negative distances, a fractional wait.",
+  "templateId": "parallel-park-kerbside",
+  "seed": 99,
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 0,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": -3,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 90,
+        "distanceM": 1.37,
+        "speedMps": 12
+      },
+      {
+        "kind": "wait",
+        "durationS": 0.123
+      },
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": -90,
+        "distanceM": 0.91,
+        "speedMps": 0.01
+      },
+      {
+        "kind": "wait",
+        "durationS": -1
+      }
+    ]
+  }
+}

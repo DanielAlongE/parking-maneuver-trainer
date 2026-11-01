@@ -1,0 +1,17 @@
+{
+  "name": "parallel-park-collision",
+  "description": "Reversing at full right lock too early clips the rear car or kerb.",
+  "templateId": "parallel-park-kerbside",
+  "seed": 7,
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": -35,
+        "distanceM": 8,
+        "speedMps": 1
+      }
+    ]
+  }
+}

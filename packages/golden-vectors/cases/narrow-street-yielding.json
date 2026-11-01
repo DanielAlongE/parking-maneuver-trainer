@@ -1,0 +1,24 @@
+{
+  "name": "narrow-street-yielding",
+  "description": "A yielding oncoming car stops; the ego drives through without slowing.",
+  "templateId": "narrow-street-oncoming",
+  "seed": 7,
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 29,
+        "speedMps": 3
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 29,
+        "speedMps": 3
+      }
+    ]
+  }
+}

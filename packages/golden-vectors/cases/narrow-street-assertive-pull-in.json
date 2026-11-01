@@ -1,0 +1,56 @@
+{
+  "name": "narrow-street-assertive-pull-in",
+  "description": "Pull into the gap on the right, wait for the assertive car to pass, then continue.",
+  "templateId": "narrow-street-oncoming",
+  "seed": 2,
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 20,
+        "speedMps": 3
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": -15,
+        "distanceM": 4.5,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 15,
+        "distanceM": 4.5,
+        "speedMps": 1
+      },
+      {
+        "kind": "wait",
+        "durationS": 10
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 15,
+        "distanceM": 4.5,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": -15,
+        "distanceM": 4.5,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 20.55,
+        "speedMps": 3
+      }
+    ]
+  }
+}

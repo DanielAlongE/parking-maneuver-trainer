@@ -1,0 +1,38 @@
+{
+  "name": "parallel-park-other-seed",
+  "description": "The reference plan on a different gap and rear car, which changes the outcome.",
+  "templateId": "parallel-park-kerbside",
+  "seed": 1234,
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": 0,
+        "distanceM": 1,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": -35,
+        "distanceM": 2.75,
+        "speedMps": 0.3
+      },
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": 35,
+        "distanceM": 3,
+        "speedMps": 0.3
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 0.5,
+        "speedMps": 0.5
+      }
+    ]
+  }
+}

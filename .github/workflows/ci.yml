@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  typescript:
+    name: TypeScript (sim core, web, replay worker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm --filter @mt/web build
+
+  python:
+    name: Python (sim twin parity, API)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Sim twin matches golden vectors
+        working-directory: packages/sim-py
+        run: uv run pytest
+      - name: API tests
+        working-directory: apps/api
+        run: uv run pytest
+
+  golden-vectors-fresh:
+    name: Golden vectors are up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm golden:generate
+      - name: Fail if regenerating changed the committed vectors
+        run: git diff --exit-code packages/golden-vectors/expected
+
+  browser-parity:
+    name: Golden vectors match in Chrome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run parity page in headless Chrome
+        working-directory: apps/web
+        run: |
+          npx vite --port 5199 --strictPort &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:5199/parity.html && break; sleep 1; done
+          google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=15000 \
+            --dump-dom http://localhost:5199/parity.html | tee parity.out
+          grep -q "RESULT: PASS" parity.out
+      # TODO(phase 0 gate): add Firefox and Safari (e.g. Playwright on ubuntu and macos runners).
+
+  migrations:
+    name: Database migration applies
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mt
+          POSTGRES_PASSWORD: mt
+          POSTGRES_DB: mt
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: psql postgresql://mt:mt@localhost:5432/mt -v ON_ERROR_STOP=1 -f apps/api/migrations/0001_init.sql

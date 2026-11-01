@@ -1,0 +1,31 @@
+{
+  "name": "three-point-turn-kerb-strike",
+  "description": "Driving fast through the turn with no slow lock changes runs out of road.",
+  "templateId": "three-point-turn",
+  "seed": 3,
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 35,
+        "distanceM": 7,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": -35,
+        "distanceM": 3.5,
+        "speedMps": 0.8
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 35,
+        "distanceM": 4,
+        "speedMps": 1
+      }
+    ]
+  }
+}

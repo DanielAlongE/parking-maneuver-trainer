@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "1.0",
+  "templateId": "narrow-street-oncoming",
+  "family": "negotiation",
+  "title": "Narrow street with an oncoming car",
+  "description": "Parked cars leave room for one lane. An oncoming car may hold back or keep coming; a gap in the parked cars on the right lets you pull in and let it pass.",
+  "difficultyTier": 3,
+  "vehicleProfile": "sedan-mid",
+  "timeLimitS": 90,
+  "params": {
+    "roadWidth": {
+      "min": 5.2,
+      "max": 5.8
+    },
+    "oncomingBehaviour": {
+      "choices": [
+        "yielding",
+        "assertive"
+      ]
+    },
+    "oncomingDelayS": {
+      "min": 0,
+      "max": 3
+    }
+  },
+  "ego": {
+    "x": 4,
+    "y": {
+      "sum": [
+        {
+          "param": "roadWidth"
+        },
+        -1.6
+      ]
+    },
+    "headingDeg": 0
+  },
+  "goal": {
+    "x": 62,
+    "y": {
+      "sum": [
+        {
+          "param": "roadWidth"
+        },
+        -1.6
+      ]
+    },
+    "headingDeg": 0,
+    "positionTolM": 1.5,
+    "headingTolDeg": 10
+  },
+  "obstacles": [
+    {
+      "id": "kerb-right",
+      "kind": "kerb",
+      "x": 50,
+      "y": -0.15,
+      "headingDeg": 0,
+      "length": 100,
+      "width": 0.3
+    },
+    {
+      "id": "kerb-left",
+      "kind": "kerb",
+      "x": 50,
+      "y": {
+        "sum": [
+          {
+            "param": "roadWidth"
+          },
+          0.15
+        ]
+      },
+      "headingDeg": 0,
+      "length": 100,
+      "width": 0.3
+    },
+    {
+      "id": "parked-1",
+      "kind": "car",
+      "x": 18.0,
+      "y": 1.0,
+      "headingDeg": 0,
+      "length": 4.8,
+      "width": 1.84
+    },
+    {
+      "id": "parked-2",
+      "kind": "car",
+      "x": 23.4,
+      "y": 1.0,
+      "headingDeg": 0,
+      "length": 4.8,
+      "width": 1.84
+    },
+    {
+      "id": "parked-3",
+      "kind": "car",
+      "x": 42.0,
+      "y": 1.0,
+      "headingDeg": 0,
+      "length": 4.8,
+      "width": 1.84
+    },
+    {
+      "id": "parked-4",
+      "kind": "car",
+      "x": 47.4,
+      "y": 1.0,
+      "headingDeg": 0,
+      "length": 4.8,
+      "width": 1.84
+    },
+    {
+      "id": "parked-5",
+      "kind": "car",
+      "x": 52.8,
+      "y": 1.0,
+      "headingDeg": 0,
+      "length": 4.8,
+      "width": 1.84
+    }
+  ],
+  "agents": [
+    {
+      "id": "oncoming-car",
+      "kind": "car",
+      "behaviour": {
+        "param": "oncomingBehaviour"
+      },
+      "x": 75,
+      "y": {
+        "sum": [
+          {
+            "param": "roadWidth"
+          },
+          -1.6
+        ]
+      },
+      "headingDeg": 180,
+      "length": 4.8,
+      "width": 1.84,
+      "speedMps": 3.0,
+      "startDelayS": {
+        "param": "oncomingDelayS"
+      },
+      "yieldDistanceM": 60
+    }
+  ]
+}
