@@ -1,0 +1,39 @@
+{
+  "name": "parallel-park-suv",
+  "description": "The sedan's reference park, driven by the large SUV.",
+  "templateId": "parallel-park-kerbside",
+  "seed": 7,
+  "vehicleProfile": "suv-large",
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": 0,
+        "distanceM": 1,
+        "speedMps": 1
+      },
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": -35,
+        "distanceM": 2.75,
+        "speedMps": 0.3
+      },
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": 35,
+        "distanceM": 3,
+        "speedMps": 0.3
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 0,
+        "distanceM": 0.5,
+        "speedMps": 0.5
+      }
+    ]
+  }
+}

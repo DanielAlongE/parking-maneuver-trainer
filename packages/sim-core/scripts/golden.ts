@@ -9,32 +9,36 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { templates, vehicles } from "@mt/scenarios";
-import { dmath, instantiate, simulate, SIM_VERSION, type Plan } from "../src/index.js";
+import { dmath, runGoldenCase, SIM_VERSION, type DmathRow, type GoldenCase } from "../src/index.js";
+
+export type { GoldenCase };
 
 export const GOLDEN_DIR = join(dirname(fileURLToPath(import.meta.url)), "../../golden-vectors");
 
-export interface GoldenCase {
-  name: string;
-  description: string;
-  templateId: string;
-  seed: number;
-  plan: Plan;
+function readJsonDir(dir: string): unknown[] {
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".json") && !f.startsWith("_"))
+    .sort()
+    .map((f) => JSON.parse(readFileSync(join(dir, f), "utf8")));
 }
 
 export function loadCases(): GoldenCase[] {
-  const dir = join(GOLDEN_DIR, "cases");
-  return readdirSync(dir)
-    .filter((f) => f.endsWith(".json"))
-    .sort()
-    .map((f) => JSON.parse(readFileSync(join(dir, f), "utf8")) as GoldenCase);
+  return readJsonDir(join(GOLDEN_DIR, "cases")) as GoldenCase[];
+}
+
+/** Committed expected outputs, keyed by case name. */
+export function loadExpected(): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const e of readJsonDir(join(GOLDEN_DIR, "expected")) as { name: string }[]) out[e.name] = e;
+  return out;
+}
+
+export function loadDmathRows(): DmathRow[] {
+  return JSON.parse(readFileSync(join(GOLDEN_DIR, "expected", "_dmath.json"), "utf8")).rows;
 }
 
 export function runCase(c: GoldenCase) {
-  const template = templates[c.templateId];
-  if (!template) throw new Error(`Unknown template ${c.templateId}`);
-  const instance = instantiate(template, c.seed, vehicles);
-  const result = simulate(instance, c.plan);
-  return { simVersion: SIM_VERSION, name: c.name, instance, result };
+  return runGoldenCase(c, templates, vehicles);
 }
 
 /** Inputs chosen to cover range reduction branches and large angles. */

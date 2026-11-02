@@ -8,7 +8,7 @@ from .instantiate import instantiate, resolve_vehicle, sample_params
 from .scenarios import load_templates, load_vehicles
 from .simulate import DT, simulate
 
-# Must equal SIM_VERSION in packages/sim-core/src/index.ts.
+# Must equal SIM_VERSION in packages/sim-core/src/version.ts.
 SIM_VERSION = "0.1.0"
 
 __all__ = [

@@ -1,0 +1,32 @@
+{
+  "name": "three-point-turn-hatchback",
+  "description": "The sedan's reference three-point turn, driven by the hatchback.",
+  "templateId": "three-point-turn",
+  "seed": 3,
+  "vehicleProfile": "hatchback",
+  "plan": {
+    "segments": [
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 35,
+        "distanceM": 5,
+        "speedMps": 0.2
+      },
+      {
+        "kind": "drive",
+        "gear": "R",
+        "steerDeg": -35,
+        "distanceM": 2.5,
+        "speedMps": 0.2
+      },
+      {
+        "kind": "drive",
+        "gear": "D",
+        "steerDeg": 35,
+        "distanceM": 6,
+        "speedMps": 0.2
+      }
+    ]
+  }
+}

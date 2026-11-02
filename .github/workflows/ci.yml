@@ -50,8 +50,16 @@ jobs:
         run: git diff --exit-code packages/golden-vectors/expected
 
   browser-parity:
-    name: Golden vectors match in Chrome
-    runs-on: ubuntu-latest
+    name: Golden vectors in ${{ matrix.browser }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, browser: chromium }
+          - { os: ubuntu-latest, browser: firefox }
+          - { os: ubuntu-latest, browser: webkit }
+          - { os: macos-latest, browser: webkit }
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -60,15 +68,30 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Run parity page in headless Chrome
-        working-directory: apps/web
-        run: |
-          npx vite --port 5199 --strictPort &
-          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:5199/parity.html && break; sleep 1; done
-          google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=15000 \
-            --dump-dom http://localhost:5199/parity.html | tee parity.out
-          grep -q "RESULT: PASS" parity.out
-      # TODO(phase 0 gate): add Firefox and Safari (e.g. Playwright on ubuntu and macos runners).
+      - run: pnpm --filter @mt/web exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm --filter @mt/web exec playwright test --project=${{ matrix.browser }}
+
+  engine-parity:
+    name: Golden vectors in engine shells (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, engines: "node jsc gjs" }
+          - { os: macos-latest, engines: "node jsc" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install JavaScriptCore and SpiderMonkey shells
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libjavascriptcoregtk-bin gjs
+      - run: bash packages/sim-core/scripts/run-engines.sh ${{ matrix.engines }}
 
   migrations:
     name: Database migration applies

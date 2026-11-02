@@ -5,7 +5,9 @@
   "description": "Human-in-the-loop training platform for parking, tight turns and low-speed negotiation",
   "packageManager": "pnpm@10.28.0",
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   },
   "engines": {
     "node": ">=22"
@@ -15,6 +17,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "golden:generate": "pnpm --filter @mt/sim-core golden:generate",
-    "dev:web": "pnpm --filter @mt/web dev"
+    "dev:web": "pnpm --filter @mt/web dev",
+    "parity:engines": "pnpm --filter @mt/sim-core parity:engines",
+    "parity:browsers": "pnpm --filter @mt/web test:parity"
   }
 }

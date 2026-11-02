@@ -45,7 +45,10 @@ def test_case_matches_typescript(case_file: Path) -> None:
     expected = json.loads((GOLDEN / "expected" / case_file.name).read_text())
     assert expected["simVersion"] == SIM_VERSION, "SIM_VERSION differs between TypeScript and Python"
 
-    instance = instantiate(TEMPLATES[case["templateId"]], case["seed"], VEHICLES)
+    template = TEMPLATES[case["templateId"]]
+    if case.get("vehicleProfile"):
+        template = {**template, "vehicleProfile": case["vehicleProfile"]}
+    instance = instantiate(template, case["seed"], VEHICLES)
     diff = first_difference(instance, expected["instance"], "instance")
     assert diff is None, diff
 
@@ -62,3 +65,11 @@ def test_dmath_matches_typescript() -> None:
         assert dmath.cos(x) == row["cos"], f"cos({x})"
         assert dmath.tan(x) == row["tan"], f"tan({x})"
         assert dmath.normalize_angle(x) == row["normalizeAngle"], f"normalize_angle({x})"
+
+
+def test_covers_every_vehicle_profile() -> None:
+    used = set()
+    for f in CASES:
+        case = json.loads(f.read_text())
+        used.add(case.get("vehicleProfile") or TEMPLATES[case["templateId"]]["vehicleProfile"])
+    assert used == set(VEHICLES)
