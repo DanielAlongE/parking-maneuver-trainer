@@ -13,7 +13,7 @@ export interface ReplayJob {
   seed: number;
   outcome: "plan" | "unreachable";
   actions: Plan["segments"];
-  clientResult?: { goalReached: boolean };
+  clientResult?: { goalReached: boolean } | null;
 }
 
 export interface ReplayResult {
@@ -31,7 +31,7 @@ export interface ReplayResult {
   steeringSmoothnessDegPerS: number;
   /** True when the browser's provisional result disagreed with this replay. */
   clientMismatch: boolean;
-  /** Full trajectory, to be written to object storage. */
+  /** Full trajectory. Not stored: reviewers re-simulate the plan in the browser, which gives identical results. */
   trajectory: number[][];
   flags: string[];
 }
@@ -45,7 +45,13 @@ export function replay(job: ReplayJob): ReplayResult {
   const instance = instantiate(template, job.seed, vehicles);
   const r = simulate(instance, { segments: job.outcome === "plan" ? job.actions : [] });
 
-  const clientMismatch = job.clientResult !== undefined && job.clientResult.goalReached !== r.goalReached;
+  // An unreachable report replays an empty plan, so the client's result for
+  // whatever plan was on screen is not comparable.
+  const clientMismatch =
+    job.outcome === "plan" &&
+    job.clientResult !== undefined &&
+    job.clientResult !== null &&
+    job.clientResult.goalReached !== r.goalReached;
   if (clientMismatch) flags.push("client_server_mismatch");
   if (r.collision) flags.push("collision");
   if (job.outcome === "plan" && !r.goalReached) flags.push("goal_not_reached");

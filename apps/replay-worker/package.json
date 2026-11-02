@@ -4,16 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "tsx src/main.ts",
     "replay": "tsx src/cli.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@mt/scenarios": "workspace:*",
-    "@mt/sim-core": "workspace:*"
+    "@mt/sim-core": "workspace:*",
+    "pg": "^8.23.1",
+    "redis": "^5.12.1"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"

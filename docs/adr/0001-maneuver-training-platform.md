@@ -29,3 +29,19 @@
 - Trigonometry is computed from basic IEEE operations (`dmath`), because `Math.sin` and Python's `math.sin` are not guaranteed to agree bit for bit.
 - A yielding oncoming car holds its position while the ego car is in its lane within 60 m ahead; an assertive car never stops.
 - The three-point-turn road is 8 to 9 m wide; 7 to 8 m was not solvable for the mid-size sedan profile. The parallel-park gap is 6.5 to 7.6 m, matching typical US spaces.
+
+## Phase 1 implementation decisions
+
+Choices made while building the MVP that the ADR document left open:
+
+| Area | Decision |
+| --- | --- |
+| Sign-in | Email and password; scrypt hashes; HttpOnly SameSite=Lax session cookie. Accounts exist only through admin invites (one-time links, 7 days). Re-issuing an invite doubles as a password reset and signs the user out everywhere. |
+| First admin | `pnpm create-admin` prints an invite link. |
+| Claims | One open claim per annotator. Expiry is applied when claims are read; expired tasks stay out of the queue until an admin resets them. |
+| Rejected tasks | Return to the queue for other annotators, never the one who failed them. |
+| Plan submission | The Submit button needs the browser's replay to reach the goal without a collision; otherwise the annotator reports the goal as unreachable. The number of plan edits is recorded as `attempts`. |
+| Replay | The API pushes each submission id to Redis; the worker also sweeps Postgres for submissions without a result, so a lost job only delays scoring. Trajectories are not stored: reviewers re-simulate the plan in the browser, which gives identical results. |
+| Review | One verdict per submission. Reviews require the server replay first. Rejections need a comment. Reviewers can't see who the annotator was. |
+| Tasks | Admins generate tasks with random seeds or a list of specific seeds. |
+| Unreachable reports | Reviewers judge them unaided until the planner check arrives in phase 2. |

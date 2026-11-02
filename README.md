@@ -12,9 +12,9 @@ Architecture: [docs/adr/0001-maneuver-training-platform.md](docs/adr/0001-maneuv
 | `packages/scenarios` | Vehicle profiles and the three MVP scenario templates (US norms) | Working |
 | `packages/golden-vectors` | Fixed cases whose results must match bit for bit everywhere | 13 cases (all 3 vehicles) + trig vectors |
 | `packages/sim-py` | Python twin of the simulator for training and evaluation | Working, matches golden vectors |
-| `apps/web` | Annotator app: top-down view, plan editor, instant feedback, submit or report unreachable | Working prototype |
-| `apps/replay-worker` | Server-side authoritative replay and flags for review | Working; queue wiring is phase 1 |
-| `apps/api` | FastAPI service, full Postgres schema, points and payout rules | Skeleton; rules tested, storage in memory |
+| `apps/web` | Web app: sign-in, annotator tasks, reviewer queue, admin screens, practice mode | Working, tested end to end |
+| `apps/replay-worker` | Takes jobs from Redis, replays each submission, writes scores to Postgres | Working, tested |
+| `apps/api` | FastAPI service: accounts, tasks and claims, submissions, reviews, points, payouts | Working, tested against Postgres |
 | `apps/planner` | Hybrid A* candidate generator | Interface only (phase 2) |
 | `training` | Snapshot export, models, closed-loop evaluation | Phase 2 |
 | `infra` | Local Postgres and Redis | Ready |
@@ -25,18 +25,32 @@ Requirements: Node 22+, pnpm 10, Python 3.11+, [uv](https://docs.astral.sh/uv/),
 
 ```bash
 pnpm install
+docker compose -f infra/docker-compose.yml up -d    # Postgres and Redis
 
-# Annotator app with instant feedback, at http://localhost:5173
-pnpm dev:web
+# Create the database tables and the first admin. Open the printed link to set a password.
+pnpm db:migrate
+pnpm create-admin --email you@example.com --name "Your Name"
 
-# API at http://localhost:8000 (the web app submits here)
-cd apps/api && uv run uvicorn mt_api.main:app --reload --app-dir src
-
-# Postgres (schema applied on first start) and Redis
-docker compose -f infra/docker-compose.yml up -d
+# Then, each in its own terminal:
+pnpm dev:api       # API on http://localhost:8000
+pnpm dev:worker    # scores submissions
+pnpm dev:web       # web app on http://localhost:5173 (forwards /api to the API)
 ```
 
-Try the parallel-park scenario with seed 7 and this plan to see a successful park:
+Settings come from environment variables; the defaults match `infra/docker-compose.yml`. See `.env.example`.
+
+### Running a pilot
+
+1. **Admin → Overview:** generate tasks for each scenario (random seeds, or specific seeds).
+2. **Admin → Users:** invite annotators and reviewers. Each invite is a one-time link, valid 7 days; send it yourself. The same button issues a password-reset link later.
+3. **Annotators** claim a task (24 hours to finish), build a plan with instant feedback, and submit it or report that the goal can't be reached safely.
+4. **The worker** replays every submission on the server and flags collisions, missed goals and browser/server mismatches.
+5. **Admin → Review batches:** assign scored submissions to a reviewer, oldest first or hand-picked. Reviewers never get their own work and don't see who the annotator was.
+6. **Reviewers** accept (1 point by default, up to 20 with a reason) or reject (comment required). Points show up at once; reviewers earn 1 point per review.
+7. **Annotators** request a payout from 20 points (1 point = $0.25). **Admin → Payouts:** email them, then mark the request paid with the payment reference, or cancel it to return the points.
+8. **Admin → Expired claims:** tasks whose 24 hours ran out wait here until reset.
+
+**Practice** lets anyone try any scenario and seed without submitting. The reference plan below parks successfully in the parallel-park scenario with seed 7:
 
 | # | Move | Steer (°) | Distance (m) | Speed (m/s) |
 | --- | --- | --- | --- | --- |
@@ -45,21 +59,39 @@ Try the parallel-park scenario with seed 7 and this plan to see a successful par
 | 3 | Reverse | 35 | 3 | 0.3 |
 | 4 | Forward | 0 | 0.5 | 0.5 |
 
+### Security notes
+
+- Passwords are hashed with scrypt. Sessions are random tokens in an HttpOnly, SameSite=Lax cookie; only hashes of session and invite tokens are stored.
+- Set `COOKIE_SECURE=true` and serve over HTTPS before the app is reachable from the internet.
+- No payment details are ever stored; payouts are arranged by email.
+- Not yet built: sign-in rate limiting and audit of reviewer point adjustments (see the ADR's fraud controls).
+
 ## Tests
 
 ```bash
 pnpm typecheck && pnpm test                 # TypeScript: sim core, golden vectors, replay worker
 (cd packages/sim-py && uv run pytest)         # Python twin parity with the golden vectors
-(cd apps/api && uv run pytest)                # Points rules and API
+(cd apps/api && uv run pytest)                # Points rules; API tests need TEST_DATABASE_URL
 pnpm parity:engines                           # Golden vectors in V8, JavaScriptCore and SpiderMonkey shells
 pnpm parity:browsers                          # Golden vectors in Chromium, Firefox and WebKit (Playwright)
+bash scripts/e2e.sh                           # Whole workflow in a browser; needs DATABASE_URL and REDIS_URL
 ```
+
+Database tests drop and rebuild the schema of the database they're given, so point them at throwaway databases:
+
+```bash
+TEST_DATABASE_URL=postgresql://mt:mt@localhost:5432/mt_test (cd apps/api && uv run pytest)
+TEST_WORKER_DATABASE_URL=postgresql://mt:mt@localhost:5432/mt_worker TEST_REDIS_URL=redis://localhost:6379/1 pnpm test
+DATABASE_URL=postgresql://mt:mt@localhost:5432/mt_e2e REDIS_URL=redis://localhost:6379/2 bash scripts/e2e.sh
+```
+
+Create those databases once with `docker compose -f infra/docker-compose.yml exec postgres createdb -U mt mt_test` (and likewise `mt_worker`, `mt_e2e`).
 
 `pnpm parity:engines` uses whichever engine shells are installed. On macOS it finds the system JavaScriptCore, the engine inside Safari; on Ubuntu install them with `sudo apt-get install libjavascriptcoregtk-bin gjs`. `pnpm parity:browsers` needs the browsers once: `pnpm --filter @mt/web exec playwright install chromium firefox webkit`.
 
 To check any other browser by hand, run `pnpm dev:web` and open http://localhost:5173/parity.html. It prints PASS or the first mismatch.
 
-CI (`.github/workflows/ci.yml`) runs all of these on Linux and macOS, checks the golden vectors are up to date, and applies the database migration to Postgres 16.
+CI (`.github/workflows/ci.yml`) runs all of these on Linux and macOS with Postgres 16 and Redis 7, and checks the golden vectors are up to date.
 
 ## The determinism rule
 
@@ -85,11 +117,12 @@ Met when the same scenario, seed and plan give bit-identical results everywhere 
 - [x] CI covering Firefox, WebKit on Linux and macOS, and the macOS system JavaScriptCore
 - [ ] Push to GitHub and see every CI job pass once
 
-## Next steps (phase 1: MVP)
+## Phase 1: MVP
 
-- [ ] Accounts and roles (annotator, reviewer, admin)
-- [ ] Persist submissions in Postgres; queue replay jobs in Redis
-- [ ] Task queue with 24-hour claims and admin reset of expired claims
-- [ ] Reviewer queue, review batches, verdicts and points (1 to 20)
-- [ ] Points dashboard, payout requests from 20 points, admin payout list
-- [ ] Zoom and pan in the scene view; per-move preview; task list
+- [x] Accounts by admin invitation, email and password sign-in, roles (annotator, reviewer, admin)
+- [x] Submissions in Postgres; replay jobs through Redis, with a database sweep as a fallback
+- [x] Task queue with 24-hour claims and admin reset of expired claims
+- [x] Reviewer queue, review batches, verdicts and points (1 to 20)
+- [x] Points dashboard, payout requests from 20 points, admin payout list
+- [x] Zoom and pan in the scene, per-move previews, practice mode
+- [ ] Gate: run a pilot; median task under 2 minutes and 50 valid labels per scenario

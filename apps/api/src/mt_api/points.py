@@ -83,3 +83,24 @@ def payout_release(points: int) -> LedgerEntry:
 
 def claim_expired(claimed_at: datetime, now: datetime) -> bool:
     return now >= claimed_at + CLAIM_WINDOW
+
+
+# Payout request moves an admin may make. Cancelling returns the held points.
+PAYOUT_TRANSITIONS: dict[str, set[str]] = {
+    "requested": {"contacted", "paid", "cancelled"},
+    "contacted": {"paid", "cancelled"},
+    "paid": set(),
+    "cancelled": set(),
+}
+
+
+def check_payout_transition(current: str, new: str, external_reference: str | None) -> None:
+    if new not in PAYOUT_TRANSITIONS.get(current, set()):
+        raise PointsRuleError(f"A {current} payout cannot be marked {new}")
+    if new == "paid" and not (external_reference and external_reference.strip()):
+        raise PointsRuleError("Record the payment reference when marking a payout paid")
+
+
+def balance_sql() -> str:
+    """SQL for a user's balance (one %s parameter: the user id)."""
+    return "SELECT COALESCE(SUM(points), 0)::int AS balance FROM points_ledger WHERE user_id = %s"

@@ -9,6 +9,22 @@ jobs:
   typescript:
     name: TypeScript (sim core, web, replay worker)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mt
+          POSTGRES_PASSWORD: mt
+          POSTGRES_DB: mt
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+    env:
+      TEST_WORKER_DATABASE_URL: postgresql://mt:mt@localhost:5432/mt
+      TEST_REDIS_URL: redis://localhost:6379/1
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -24,6 +40,17 @@ jobs:
   python:
     name: Python (sim twin parity, API)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mt
+          POSTGRES_PASSWORD: mt
+          POSTGRES_DB: mt
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://mt:mt@localhost:5432/mt
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -94,7 +121,7 @@ jobs:
       - run: bash packages/sim-core/scripts/run-engines.sh ${{ matrix.engines }}
 
   migrations:
-    name: Database migration applies
+    name: Database migrations apply and are idempotent
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -105,6 +132,51 @@ jobs:
           POSTGRES_DB: mt
         ports: ["5432:5432"]
         options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://mt:mt@localhost:5432/mt
     steps:
       - uses: actions/checkout@v4
-      - run: psql postgresql://mt:mt@localhost:5432/mt -v ON_ERROR_STOP=1 -f apps/api/migrations/0001_init.sql
+      - uses: astral-sh/setup-uv@v6
+      - working-directory: apps/api
+        run: |
+          uv run python -m mt_api.cli migrate
+          uv run python -m mt_api.cli migrate | grep "none (up to date)"
+
+  end-to-end:
+    name: End-to-end workflow in Chromium
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mt
+          POSTGRES_PASSWORD: mt
+          POSTGRES_DB: mt
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://mt:mt@localhost:5432/mt
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mt/web exec playwright install --with-deps chromium
+      - run: bash scripts/e2e.sh
+      - name: Keep logs and traces when it fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            .e2e-logs
+            apps/web/test-results

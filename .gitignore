@@ -17,3 +17,6 @@ __pycache__/
 # Playwright
 test-results/
 playwright-report/
+
+# End-to-end test logs
+.e2e-logs/

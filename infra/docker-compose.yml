@@ -9,7 +9,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../apps/api/migrations:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: redis:7
